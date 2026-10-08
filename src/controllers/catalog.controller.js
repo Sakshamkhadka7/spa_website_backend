@@ -2,7 +2,8 @@ const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { ok } = require('../utils/respond');
 const { pagination, paginationMeta } = require('../utils/query');
-const { publicUploadPath, deleteUpload } = require('../utils/files');
+const { deleteImageAsset } = require('../utils/files');
+const { uploadImage } = require('../services/image.service');
 
 exports.catalogController = (Model, options) => ({
   list: asyncHandler(async (req, res) => {
@@ -21,18 +22,22 @@ exports.catalogController = (Model, options) => ({
   }),
   create: asyncHandler(async (req, res) => {
     if (!req.file) throw new ApiError(422, 'Image is required');
-    const input = options.normalize(req.body); input.image = publicUploadPath(req.file);
+    const uploaded = await uploadImage(req.file, options.cloudinaryFolder);
+    const input = options.normalize(req.body); input.image = uploaded.url; input.imagePublicId = uploaded.publicId;
     try { const item = await Model.create(input); ok(res, `${options.singular} created`, item, 201); }
-    catch (error) { await deleteUpload(input.image); throw error; }
+    catch (error) { await deleteImageAsset(input.image, input.imagePublicId); throw error; }
   }),
   update: asyncHandler(async (req, res) => {
-    const item = await Model.findById(req.params.id); if (!item) throw new ApiError(404, `${options.singular} not found`);
-    const oldImage = item.image; Object.assign(item, options.normalize(req.body)); if (req.file) item.image = publicUploadPath(req.file);
-    try { await item.save(); if (req.file) await deleteUpload(oldImage); ok(res, `${options.singular} updated`, item); }
-    catch (error) { if (req.file) await deleteUpload(item.image); throw error; }
+    const item = await Model.findById(req.params.id).select('+imagePublicId'); if (!item) throw new ApiError(404, `${options.singular} not found`);
+    const oldImage = item.image; const oldPublicId = item.imagePublicId;
+    Object.assign(item, options.normalize(req.body));
+    let uploaded;
+    if (req.file) { uploaded = await uploadImage(req.file, options.cloudinaryFolder); item.image = uploaded.url; item.imagePublicId = uploaded.publicId; }
+    try { await item.save(); if (uploaded) await deleteImageAsset(oldImage, oldPublicId); ok(res, `${options.singular} updated`, item); }
+    catch (error) { if (uploaded) await deleteImageAsset(uploaded.url, uploaded.publicId); throw error; }
   }),
   remove: asyncHandler(async (req, res) => {
-    const item = await Model.findByIdAndDelete(req.params.id); if (!item) throw new ApiError(404, `${options.singular} not found`);
-    await deleteUpload(item.image); ok(res, `${options.singular} deleted`, null);
+    const item = await Model.findByIdAndDelete(req.params.id).select('+imagePublicId'); if (!item) throw new ApiError(404, `${options.singular} not found`);
+    await deleteImageAsset(item.image, item.imagePublicId); ok(res, `${options.singular} deleted`, null);
   }),
 });

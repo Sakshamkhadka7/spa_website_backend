@@ -1,5 +1,5 @@
 const router = require('express').Router(); const Team = require('../models/TeamMember'); const { catalogController } = require('../controllers/catalog.controller');
 const { protect, authorize } = require('../middleware/auth'); const objectId = require('../middleware/objectId'); const validate = require('../middleware/validate'); const { uploadFor } = require('../middleware/upload'); const v = require('../validators');
-const c = catalogController(Team, { label: 'Team members', singular: 'Team member', visibilityField: 'status', visibleValue: true, searchFields: ['name', 'position', 'specialization'], normalize: (b) => ({ ...b, status: b.status ?? b.active }) });
+const c = catalogController(Team, { label: 'Team members', singular: 'Team member', cloudinaryFolder: 'spa/team', visibilityField: 'status', visibleValue: true, searchFields: ['name', 'position', 'specialization'], normalize: (b) => ({ ...b, status: b.status ?? b.active }) });
 router.get('/', c.list); router.get('/admin/all', protect, authorize('admin'), c.list); router.get('/:id', objectId(), c.get); router.use(protect, authorize('admin')); router.post('/', uploadFor('team').single('image'), v.team, validate, c.create); router.put('/:id', objectId(), uploadFor('team').single('image'), c.update); router.delete('/:id', objectId(), c.remove);
 module.exports = router;

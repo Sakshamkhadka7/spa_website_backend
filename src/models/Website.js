@@ -4,7 +4,9 @@ const schema = new mongoose.Schema(
     key: { type: String, unique: true, default: "main" },
     spaName: { type: String, default: "Salus Per Aquam" },
     logo: { type: String, default: "" },
+    logoPublicId: { type: String, default: null, select: false },
     heroImage: { type: String, default: "" },
+    heroImagePublicId: { type: String, default: null, select: false },
     heroTitle: { type: String, default: "" },
     heroSubtitle: { type: String, default: "" },
     aboutContent: { type: String, default: "" },
@@ -43,6 +45,8 @@ const schema = new mongoose.Schema(
         ret.openingHours = Array.isArray(ret.openingHours) ? ret.openingHours : [];
         ret.timeSlots = Array.isArray(ret.timeSlots) ? ret.timeSlots : [];
         ret.footerText = ret.footerContent || "";
+        delete ret.logoPublicId;
+        delete ret.heroImagePublicId;
         delete ret._id;
         delete ret.__v;
         delete ret.key;
