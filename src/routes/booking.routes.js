@@ -1,0 +1,4 @@
+const router = require('express').Router(); const c = require('../controllers/booking.controller'); const { protect, authorize } = require('../middleware/auth'); const objectId = require('../middleware/objectId'); const validate = require('../middleware/validate'); const v = require('../validators');
+router.use(protect); router.post('/', authorize('customer'), v.booking, validate, c.create); router.get('/me', authorize('customer'), c.mine); router.get('/me/:id', authorize('customer'), objectId(), c.getMine); router.patch('/me/:id/cancel', authorize('customer'), objectId(), c.cancelMine);
+router.get('/', authorize('admin'), c.all); router.get('/:id', authorize('admin'), objectId(), c.getAny); router.patch('/:id', authorize('admin'), objectId(), c.update); router.delete('/:id', authorize('admin'), objectId(), c.remove);
+module.exports = router;

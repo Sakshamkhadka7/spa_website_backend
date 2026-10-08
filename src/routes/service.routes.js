@@ -1,0 +1,5 @@
+const router = require('express').Router(); const Service = require('../models/Service'); const { catalogController } = require('../controllers/catalog.controller');
+const { protect, authorize } = require('../middleware/auth'); const objectId = require('../middleware/objectId'); const validate = require('../middleware/validate'); const { uploadFor } = require('../middleware/upload'); const v = require('../validators');
+const c = catalogController(Service, { label: 'Services', singular: 'Service', visibilityField: 'status', visibleValue: true, searchFields: ['name', 'category', 'description'], normalize: (b) => ({ ...b, status: b.status ?? b.active }) });
+router.get('/', c.list); router.get('/admin/all', protect, authorize('admin'), c.list); router.get('/:id', objectId(), c.get); router.use(protect, authorize('admin')); router.post('/', uploadFor('services').single('image'), v.service, validate, c.create); router.put('/:id', objectId(), uploadFor('services').single('image'), c.update); router.delete('/:id', objectId(), c.remove);
+module.exports = router;

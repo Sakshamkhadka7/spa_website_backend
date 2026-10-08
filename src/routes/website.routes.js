@@ -1,0 +1,2 @@
+const router = require('express').Router(); const c = require('../controllers/website.controller'); const { protect, authorize } = require('../middleware/auth'); const { uploadFor } = require('../middleware/upload');
+router.get('/', c.get); router.put('/', protect, authorize('admin'), uploadFor('website').fields([{ name: 'logo', maxCount: 1 }, { name: 'heroImage', maxCount: 1 }]), (req, _res, next) => { req.files = Object.values(req.files || {}).flat(); next(); }, c.update); module.exports = router;
